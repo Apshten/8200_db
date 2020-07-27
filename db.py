@@ -70,8 +70,16 @@ class DBTable(db_api.DBTable):
         raise NotImplementedError
 
     def query_table(self, criteria: List[db_api.SelectionCriteria]) -> List[Dict[str, Any]]:
-        raise NotImplementedError
-
+        temp = list()
+        with shelve.open(os.path.join(db_api.DB_ROOT, self.name), writeback=True) as db:
+            for key in db.keys():
+                if key not in self.fields:
+                    for item in criteria:
+                        if eval(f'{db[key][db[item.field_name]]}{item.operator}{item.value}'):
+                            temp.append(self.get_record(key))
+                            break
+        return temp
+    
     def create_index(self, field_to_index: str) -> None:
         raise NotImplementedError
 
